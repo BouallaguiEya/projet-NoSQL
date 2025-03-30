@@ -4,7 +4,7 @@ MONGO_DB = "entertainment"
 MONGO_COLLECTION = "films"
 
 
-# Configuration Neo4j
-NEO4J_URI = "neo4j+s://3022cdbe.databases.neo4j.io"
-NEO4J_USER = "neo4j"
-NEO4J_PASSWORD = "aiE1af5FQTwi5afeGO3vHmn16DtTqdAQ288tBu1V2D8"
+# Configuration Neo4j pour la connexion locale
+NEO4J_URI = "neo4j://localhost:7687"  # URI pour la connexion locale
+NEO4J_USER = "neo4j"  # Utilisateur par défaut
+NEO4J_PASSWORD = "classe47"  # Remplace par le mot de passe que tu as défini
