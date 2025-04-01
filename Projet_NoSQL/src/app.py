@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from mongo_queries import *
+import importlib
 
 # Configuration de la page
 st.set_page_config(layout="wide", page_title="Analyse de Films", page_icon="🎬")
@@ -22,10 +23,11 @@ st.markdown("""
 def display_ann_plus_grand_nbr_films():
     st.header("1. Année avec le plus grand nombre de films")
     result = ann_plus_grand_nbr_films()
-    if result:
+    st.write(result['_id'])
+    if result is not None and len(result) > 0:
         col1, col2 = st.columns(2)
-        col1.metric("Année record", result[0]['_id'])
-        col2.metric("Nombre de films", result[0]['count'])
+        col1.metric("Année record", result['_id'])
+        col2.metric("Nombre de films", result['count'])
     else:
         st.warning("Aucun résultat trouvé")
 
@@ -76,12 +78,13 @@ def display_film_plus_revenu():
     if result:
         col1, col2 = st.columns(2)
         col1.metric("Titre", result.get('title', 'Inconnu'))
-        col2.metric("Revenu", f"${result.get('revenue', 0)/1e6:.2f}M")
+        col2.metric("Revenu", f"${result.get('Revenue (Millions)', 0):.2f}M")
         
         with st.expander("Détails"):
             st.json(result)
     else:
         st.warning("Aucun film avec revenu trouvé")
+
 
 def display_realisateurs_plus_5_films():
     st.header("7. Réalisateurs avec plus de 5 films")
@@ -96,14 +99,21 @@ def display_realisateurs_plus_5_films():
         plt.xticks(rotation=45, ha='right')
         st.pyplot(fig)
     else:
-        st.warning("Aucun réalisateur trouvé")
+        st.warning("Aucun réalisateur ayant realise plus de 5 films")
+        result2 = realisateurs_plus_3_films()
+        st.write("Réalisateurs avec plus de 3 films")
+        if result2:
+            df = pd.DataFrame(result2).rename(columns={"_id": "Réalisateur", "count": "Nombre de films"})
+            st.dataframe(df)
+        else:
+             st.warning("Aucun réalisateur trouvé")
 
 def display_genre_plus_revenu_moyen():
     st.header("8. Genre rapportant en moyenne le plus de revenu")
     result = genre_plus_revenu_moyen()
     if result:
         st.metric("Genre", result[0]['_id'])
-        st.metric("Revenu moyen", f"${result[0]['revenu_moyen']/1e6:.2f}M")
+        st.metric("Revenu moyen", f"${result[0]['revenu_moyen']:.2f}M")
     else:
         st.warning("Aucun résultat trouvé")
 
@@ -111,13 +121,8 @@ def display_top_3_decennie():
     st.header("9. Top 3 films par décennie")
     result = top_3_films_par_decennie()
     if result:
-        df = pd.DataFrame(result).rename(columns={"_id": "Décennie", "top_films": "Top 3 Films"})
+        df = pd.DataFrame(result).rename(columns={"_id": "Décennie", "top3": "Top 3 Films"})
         st.dataframe(df)
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(data=df.explode("Top 3 Films"), x="Décennie", y="Top 3 Films", ax=ax)
-        plt.xticks(rotation=45, ha='right')
-        st.pyplot(fig)
     else:
         st.warning("Aucun résultat trouvé")
 
@@ -125,7 +130,7 @@ def display_films_plus_longs():
     st.header("10. Films les plus longs par genre")
     result = film_plus_long_par_genre()
     if result:
-        df = pd.DataFrame(result).rename(columns={"_id": "Genre", "film": "Film", "duree": "Durée"})
+        df = pd.DataFrame(result).rename(columns={"_id": "Genre", "film": "Film", "Runtime (Minutes)": "Durée"})
         st.dataframe(df)
         
         fig, ax = plt.subplots(figsize=(10, 6))
@@ -136,36 +141,38 @@ def display_films_plus_longs():
         st.warning("Aucun film trouvé")
 
 def display_creer_vue_films_bien_notes_revenus():
-    st.header("11. Films avec note > 80 et revenu > 50M")
+    st.header("11. Films avec une note > 80 et un revenu > 50M")
     result = creer_vue_films_notes_revenus()
     if result:
-        df = pd.DataFrame(result).rename(columns={"_id": "Titre", "rating": "Note", "revenue": "Revenu"})
+        df = pd.DataFrame(result).rename(columns={"title": "Titre", "Metascore": "Note", "Revenue (Millions)": "Revenu"})
         st.dataframe(df)
-        
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.barplot(data=df, x="Titre", y="Note", ax=ax)
-        plt.xticks(rotation=45, ha='right')
-        st.pyplot(fig)
     else:
         st.warning("Aucun film trouvé")
 
 def display_correlation_runtime_revenue():
     st.header("12. Corrélation entre durée et revenu")
-    result = correlation_runtime_revenue()
-    if result:
-        df = pd.DataFrame(result).rename(columns={"_id": "Film", "runtime": "Durée", "revenue": "Revenu"})
-        fig, ax = plt.subplots(figsize=(10, 6))
-        sns.scatterplot(data=df, x="Durée", y="Revenu", ax=ax)
-        plt.title("Corrélation entre durée et revenu")
-        st.pyplot(fig)
+    result = correlation_runtime_revenue()  
+    if result: 
+        st.metric("Correlation", result)
+        if result > 0.7:
+            st.write("La corrélation est très forte et positive.")
+        elif result > 0.3:
+            st.write("La corrélation est plutot modérée et positive.")
+        elif result < -0.3:
+            st.write("La corrélation est plutot modérée et négative.")
+        elif result < -0.7:
+            st.write("La corrélation est très forte et négative.")
+        else:
+            st.write("La corrélation est faible.")
     else:
         st.warning("Aucune donnée disponible")
+        
 
 def display_evolution_duree_par_decennie():
     st.header("13. Évolution de la durée moyenne des films par décennie")
     result = evolution_duree_par_decennie()
     if result:
-        df = pd.DataFrame(result).rename(columns={"_id": "Décennie", "avg_runtime": "Durée moyenne"})
+        df = pd.DataFrame(result).rename(columns={"_id": "Décennie", "duree_moyenne": "Durée moyenne"})
         fig, ax = plt.subplots(figsize=(10, 6))
         sns.lineplot(data=df, x="Décennie", y="Durée moyenne", ax=ax)
         plt.title("Évolution de la durée moyenne des films par décennie")
