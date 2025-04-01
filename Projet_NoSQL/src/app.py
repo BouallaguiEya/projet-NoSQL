@@ -255,6 +255,123 @@ def display_genre_le_plus_represente():
     else:
         st.warning("Aucun genre trouvé.")
 
+def display_films_avec_coacteurs():
+    st.header("19. Films où les co-acteurs des membres du projet ont joué")
+    query = """
+        MATCH (m:Acteur)-[:A_JOUE]->(f1:Film)<-[:A_JOUE]-(co:Acteur)-[:A_JOUE]->(f2:Film)
+        WHERE m.name IN ['Eya BOUALLAGUI', 'Coralie TADJIFOUE'] AND NOT (m)-[:A_JOUE]->(f2)
+        RETURN DISTINCT f2.title AS film
+        LIMIT 10
+    """
+    result = run_query(query)
+    if result:
+        films = [record['film'] for record in result]
+        df = pd.DataFrame(films, columns=["Films"])
+        st.dataframe(df)
+    else:
+        st.warning("Aucun film trouvé.")
+
+def display_realisateur_plus_nb_acteurs():
+    st.header("20. Réalisateur ayant travaillé avec le plus grand nombre d’acteurs")
+    query = """
+        MATCH (r:Realisateur)-[:A_REALISE]->(f:Film)<-[:A_JOUE]-(a:Acteur)
+        RETURN r.name AS realisateur, COUNT(DISTINCT a) AS nb_acteurs
+        ORDER BY nb_acteurs DESC LIMIT 1
+    """
+    result = run_query(query)
+    if result:
+        realisateur = result[0]['realisateur']
+        nb_acteurs = result[0]['nb_acteurs']
+        st.metric("Réalisateur", realisateur)
+        st.metric("Nombre d'acteurs", nb_acteurs)
+    else:
+        st.warning("Aucun réalisateur trouvé.")
+
+def display_films_connus():
+    st.header("21. Films les plus connectés (acteurs en commun)")
+    query = """
+        MATCH (f1:Film)<-[:A_JOUE]-(a:Acteur)-[:A_JOUE]->(f2:Film)
+        WHERE f1 <> f2
+        RETURN f1.title AS film1, f2.title AS film2, COUNT(DISTINCT a) AS nb_acteurs_communs
+        ORDER BY nb_acteurs_communs DESC LIMIT 5
+    """
+    result = run_query(query)
+    if result:
+        df = pd.DataFrame(result).rename(columns={"film1": "Film 1", "film2": "Film 2", "nb_acteurs_communs": "Nombre d'acteurs communs"})
+        st.dataframe(df)
+    else:
+        st.warning("Aucun film trouvé.")
+
+def display_top_5_acteurs():
+    st.header("22. Top 5 acteurs avec le plus de realisateurs differents")
+    query = """
+        MATCH (a:Acteur)-[:A_JOUE]->(f:Film)<-[:A_REALISE]-(r:Realisateur)
+        RETURN a.name AS acteur, COUNT(DISTINCT r) AS nb_realisateurs
+        ORDER BY nb_realisateurs DESC LIMIT 5
+    """
+    result = run_query(query)
+    if result:
+        df = pd.DataFrame(result).rename(columns={"acteur": "Acteur", "nb_realisateurs": "Nombre de réalisateurs"})
+        st.dataframe(df)
+    else:
+        st.warning("Aucun acteur trouvé.")
+
+def  display_recommander_anne_hattaway():
+    st.header("23. Recommander un film à Anne Hathaway selon ses genres")
+    query = """
+        MATCH (a:Acteur {name: 'Anne Hathaway'})-[:A_JOUE]->(f:Film)-[:GENRE]->(g:Genre)
+        MATCH (rec:Film)-[:GENRE]->(g)
+        WHERE NOT (a)-[:A_JOUE]->(rec)
+        RETURN DISTINCT rec.title AS recommendation
+        LIMIT 5
+    """
+    result = run_query(query)
+    if result:
+        recommendations = [record['recommendation'] for record in result]
+        df = pd.DataFrame(recommendations, columns=["Recommandations"])
+        st.dataframe(df)
+    else:
+        st.warning("Aucune recommandation trouvée.")
+
+def format_chemin_df(result):
+    """Transforme le résultat Neo4j en DataFrame exploitable."""
+    data = []
+
+    for record in result:
+        chemin = record["p"]  # Extraire la liste des éléments du chemin
+
+        acteurs = []  # Liste des acteurs uniquement
+
+        # Filtrer uniquement les acteurs (qui sont des dictionnaires)
+        for elem in chemin:
+            if isinstance(elem, dict) and "name" in elem:  
+                acteurs.append(elem["name"])
+
+        # Créer les relations Acteur -> Acteur
+        for i in range(len(acteurs) - 1):
+            acteur1 = acteurs[i]
+            acteur2 = acteurs[i + 1]
+            data.append([acteur1, "A_JOUE_AVEC", acteur2])
+
+    return pd.DataFrame(data, columns=["Acteur 1", "Relation", "Acteur 2"])
+
+
+def display_chemin_le_plus_court():
+    st.header("🎭 Chemin le plus court entre Tom Hanks et Scarlett Johansson")
+
+    query = """
+        MATCH p=shortestPath((a1:Acteur {name:'Tom Hanks'})-[:A_JOUE*]-(a2:Acteur {name:'Scarlett Johansson'}))
+        RETURN p
+    """
+    result = run_query(query)
+
+    if result:
+        df = format_chemin_df(result)
+        st.write("### 🔗 Chemin sous forme de tableau :")
+        st.dataframe(df)
+    else:
+        st.warning("Aucun chemin trouvé.")
+
 # Menu principal
 st.sidebar.title("Navigation")
 options = [
@@ -276,6 +393,12 @@ options = [
     "16. Acteur avec le plus de revenus",
     "17. Moyenne des votes",
     "18. Genre le plus représenté",
+    "19. Films avec co-acteurs",
+    "20. Réalisateur avec le plus d'acteurs",
+    "21. Films les plus connectés",
+    "22. Top 5 acteurs avec le plus de réalisateurs",
+    "23. Recommander un film à Anne Hathaway",
+    "24. Chemin le plus court entre Tom Hanks et Scarlett Johansson"
 ]
 choice = st.sidebar.selectbox('Choisir une option', options)
 
@@ -316,6 +439,18 @@ elif choice == options[16]:
     display_moyenne_votes()
 elif choice == options[17]:
     display_genre_le_plus_represente()
+elif choice == options[18]:
+    display_films_avec_coacteurs()
+elif choice == options[19]:
+    display_realisateur_plus_nb_acteurs()
+elif choice == options[20]:
+    display_films_connus()
+elif choice == options[21]:
+    display_top_5_acteurs()
+elif choice == options[22]:
+    display_recommander_anne_hattaway()
+elif choice == options[23]:
+    display_chemin_le_plus_court()
 else:
     st.warning("Sélectionnez une option valide")
 
