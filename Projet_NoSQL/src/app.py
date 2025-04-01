@@ -5,11 +5,10 @@ import seaborn as sns
 from mongo_queries import *
 import importlib
 
-# Configuration de la page
+
 st.set_page_config(layout="wide", page_title="Analyse de Films", page_icon="🎬")
 st.title("🎬 Analyse de la Base de Données de Films")
 
-# Style CSS personnalisé
 st.markdown("""
 <style>
     .st-emotion-cache-1kyxreq {justify-content: center;}
@@ -19,7 +18,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Fonctions d'affichage Streamlit
+# Fonctions Streamlit
 def display_ann_plus_grand_nbr_films():
     st.header("1. Année avec le plus grand nombre de films")
     result = ann_plus_grand_nbr_films()
@@ -198,7 +197,7 @@ options = [
     "12. Corrélation durée-revenu",
     "13. Évolution durée moyenne"
 ]
-choice = st.sidebar.selectbox("Choisissez une analyse", options)
+choice = st.sidebar.selectbox('Choisir une option', options)
 
 # Router vers la fonction d'affichage correspondante
 if choice == options[0]:
@@ -230,6 +229,6 @@ elif choice == options[12]:
 else:
     st.warning("Sélectionnez une option valide")
 
-# Footer
+
 st.divider()
-st.caption("Application développée avec Streamlit • Données provenant de MongoDB Atlas")
+st.caption("Projet NoSQL • TADJIFOUE BOUALLAHUI • 2025")
