@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from mongo_queries import *
 import importlib
+from cypher_queries import run_query  
 
-
-st.set_page_config(layout="wide", page_title="Analyse de Films", page_icon="🎬")
-st.title("🎬 Analyse de la Base de Données de Films")
+st.set_page_config(layout="wide", page_title="Projet NoSQL", page_icon="🎬")
+st.title("🎬 Exploration et Interrogation de Bases de Donnees NoSQL")
 
 st.markdown("""
 <style>
@@ -178,7 +178,82 @@ def display_evolution_duree_par_decennie():
         st.pyplot(fig)
     else:
         st.warning("Aucune donnée disponible")
-        
+
+def display_acteur_plus_de_films():
+    st.header("14. Acteur ayant joué dans le plus de films")
+    query = """
+        MATCH (a:Acteur)-[:A_JOUE]->(f:Film)
+        RETURN a.name AS acteur, COUNT(f) AS nb_films
+        ORDER BY nb_films DESC LIMIT 1
+    """
+    result = run_query(query)
+    if result:
+        acteur = result[0]['acteur']
+        nb_films = result[0]['nb_films']
+        st.metric("Acteur", acteur)
+        st.metric("Nombre de films", nb_films)
+    else:
+        st.warning("Aucun acteur trouvé.")
+
+def display_acteurs_avec_anne_hathaway():
+    st.header("15. Acteurs ayant joué avec Anne Hathaway")
+    query = """
+        MATCH (a1:Acteur {name: 'Anne Hathaway'})-[:A_JOUE]->(f:Film)<-[:A_JOUE]-(a2:Acteur)
+        WHERE a1 <> a2
+        RETURN DISTINCT a2.name AS acteur
+    """
+    result = run_query(query)
+    if result:
+        acteurs = [record['acteur'] for record in result]
+        df = pd.DataFrame(acteurs, columns=["Acteur"])
+        st.dataframe(df)
+    else:
+        st.warning("Aucun acteur trouvé.")
+
+def display_acteur_plus_revenus():
+    st.header("16. Acteur ayant joué dans les films avec le plus de revenus cumulés")
+    query = """
+        MATCH (a:Acteur)-[:A_JOUE]->(f:Film)
+        RETURN a.name AS acteur, SUM(f.revenue) AS total_revenus
+        ORDER BY total_revenus DESC LIMIT 1
+    """
+    result = run_query(query)
+    if result:
+        acteur = result[0]['acteur']
+        total_revenus = result[0]['total_revenus']
+        st.metric("Acteur", acteur)
+        st.metric("Total des revenus", f"${total_revenus:.2f}M")
+    else:
+        st.warning("Aucun acteur trouvé.")
+
+def display_moyenne_votes():
+    st.header("17. Moyenne des votes de tous les films")
+    query = """
+        MATCH (f:Film)
+        RETURN avg(f.votes) AS moyenne_votes
+    """
+    result = run_query(query)
+    if result:
+        moyenne_votes = result[0]['moyenne_votes']
+        st.metric("Moyenne des votes", moyenne_votes)
+    else:
+        st.warning("Aucune donnée disponible.")
+
+def display_genre_le_plus_represente():
+    st.header("18. Genre le plus représenté")
+    query = """
+        MATCH (f:Film)-[:GENRE]->(g:Genre)
+        RETURN g.name AS genre, COUNT(*) AS total
+        ORDER BY total DESC LIMIT 1
+    """
+    result = run_query(query)
+    if result:
+        genre = result[0]['genre']
+        total = result[0]['total']
+        st.metric("Genre", genre)
+        st.metric("Nombre de films", total)
+    else:
+        st.warning("Aucun genre trouvé.")
 
 # Menu principal
 st.sidebar.title("Navigation")
@@ -189,13 +264,18 @@ options = [
     "4. Films par année",
     "5. Genres disponibles",
     "6. Film le plus rentable",
-    "7. Réalisateurs prolifiques",
+    "7. Réalisateurs ayant realisé plus de 5 films",
     "8. Genre le plus rentable",
     "9. Top 3 par décennie",
     "10. Films les plus longs",
     "11. Films bien notés",
     "12. Corrélation durée-revenu",
-    "13. Évolution durée moyenne"
+    "13. Évolution durée moyenne",
+    "14. Acteur ayant joué dans le plus de films",
+    "15. Acteurs ayant joué avec Anne Hathaway",
+    "16. Acteur avec le plus de revenus",
+    "17. Moyenne des votes",
+    "18. Genre le plus représenté",
 ]
 choice = st.sidebar.selectbox('Choisir une option', options)
 
@@ -226,6 +306,16 @@ elif choice == options[11]:
     display_correlation_runtime_revenue()
 elif choice == options[12]:
     display_evolution_duree_par_decennie()
+elif choice == options[13]:
+    display_acteur_plus_de_films()
+elif choice == options[14]:
+    display_acteurs_avec_anne_hathaway()
+elif choice == options[15]:
+    display_acteur_plus_revenus()
+elif choice == options[16]:
+    display_moyenne_votes()
+elif choice == options[17]:
+    display_genre_le_plus_represente()
 else:
     st.warning("Sélectionnez une option valide")
 

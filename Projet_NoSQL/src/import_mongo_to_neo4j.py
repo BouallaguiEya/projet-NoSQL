@@ -13,9 +13,17 @@ def get_films_mongo():
     if db is not None:
         collection = db[MONGO_COLLECTION]
         films = list(collection.find({}, {
-            "_id": 1, "title": 1, "year": 1, "votes": 1,
-            "revenue": 1, "rating": 1, "director": 1, "actors": 1
+            "_id": 1, "title": 1, "year": 1, "Votes": 1,
+            "Revenue (Millions)": 1,  
+            "rating": 1, "director": 1, "actors": 1
         }))
+        
+        
+        for film in films:
+            film["votes"] = film.pop("Votes", None)  
+            film["revenue"] = film.pop("Revenue (Millions)", None)
+            film["annee"] = film.pop("year", 0000)  
+            film["titre"] = film.pop("title", "Titre inconnu")
         return films
     return []
 

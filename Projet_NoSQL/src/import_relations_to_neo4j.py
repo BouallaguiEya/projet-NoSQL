@@ -44,8 +44,10 @@ def insert_data():
             film_id = str(film.get('_id'))
             title = film.get('title')
             year = film.get('year')
-            votes = film.get('votes')
-            revenue = film.get('revenue')
+            votes = film.get('Votes')
+            revenue = film.get('Revenue (Millions)', 0.0)
+            if isinstance(revenue, str):
+                revenue = 0.0
             rating = film.get('rating')
             director = film.get('Director')
             actors_raw = film.get('Actors', "")
