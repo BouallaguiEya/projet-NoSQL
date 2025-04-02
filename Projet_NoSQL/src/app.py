@@ -333,21 +333,20 @@ def  display_recommander_anne_hattaway():
     else:
         st.warning("Aucune recommandation trouvée.")
 
+#Chemin le plus court entre Tom Hanks et Scarlett Johansson
 def format_chemin_df(result):
-    """Transforme le résultat Neo4j en DataFrame exploitable."""
+    """Transforme le résultat neo4j en df."""
     data = []
 
     for record in result:
-        chemin = record["p"]  # Extraire la liste des éléments du chemin
+        chemin = record["p"]  
 
-        acteurs = []  # Liste des acteurs uniquement
+        acteurs = []  
 
-        # Filtrer uniquement les acteurs (qui sont des dictionnaires)
         for elem in chemin:
             if isinstance(elem, dict) and "name" in elem:  
                 acteurs.append(elem["name"])
 
-        # Créer les relations Acteur -> Acteur
         for i in range(len(acteurs) - 1):
             acteur1 = acteurs[i]
             acteur2 = acteurs[i + 1]
@@ -357,7 +356,7 @@ def format_chemin_df(result):
 
 
 def display_chemin_le_plus_court():
-    st.header("🎭 Chemin le plus court entre Tom Hanks et Scarlett Johansson")
+    st.header("24. Chemin le plus court entre Tom Hanks et Scarlett Johansson")
 
     query = """
         MATCH p=shortestPath((a1:Acteur {name:'Tom Hanks'})-[:A_JOUE*]-(a2:Acteur {name:'Scarlett Johansson'}))
@@ -367,12 +366,12 @@ def display_chemin_le_plus_court():
 
     if result:
         df = format_chemin_df(result)
-        st.write("### 🔗 Chemin sous forme de tableau :")
+        st.write("### Chemin:")
         st.dataframe(df)
     else:
         st.warning("Aucun chemin trouvé.")
 
-# Menu principal
+# onglet de navigation
 st.sidebar.title("Navigation")
 options = [
     "1. Année record de sorties",
@@ -402,7 +401,7 @@ options = [
 ]
 choice = st.sidebar.selectbox('Choisir une option', options)
 
-# Router vers la fonction d'affichage correspondante
+# Options
 if choice == options[0]:
     display_ann_plus_grand_nbr_films()
 elif choice == options[1]:
