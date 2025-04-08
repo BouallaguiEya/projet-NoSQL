@@ -31,7 +31,7 @@ def exporter_acteurs():
         for acteur in sorted(acteurs_set):
             writer.writerow([acteur])
 
-    print(f"✅ Exportation de {len(acteurs_set)} acteurs terminée.")
+    print(f"Exportation de {len(acteurs_set)} acteurs terminée.")
 
 if __name__ == "__main__":
     exporter_acteurs()

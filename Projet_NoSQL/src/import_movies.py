@@ -25,7 +25,7 @@ def importer_donnees():
 
         collection.delete_many({})  # Nettoyage avant import
         collection.insert_many(data)
-        print(f"✅ {len(data)} films insérés avec succès dans MongoDB.")
+        print(f" {len(data)} films insérés avec succès dans MongoDB.")
 
     except Exception as e:
         print(f"Erreur lors de l'importation : {e}")

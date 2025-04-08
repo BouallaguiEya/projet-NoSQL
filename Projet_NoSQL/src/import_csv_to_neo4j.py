@@ -19,10 +19,10 @@ class Neo4jImporter:
             session.run(query)
 
     def import_data(self):
-        print("🗑️ Suppression des anciens nœuds...")
+        print(" Suppression des anciens nœuds...")
         self.run_query("MATCH (n) DETACH DELETE n")
 
-        print("🎬 Importation des films...")
+        print(" Importation des films...")
         import_films = """
         LOAD CSV WITH HEADERS FROM 'file:///films.csv' AS row
         CREATE (f:Film {
@@ -37,7 +37,7 @@ class Neo4jImporter:
         """
         self.run_query(import_films)
 
-        print("🎭 Importation des acteurs et relations...")
+        print(" Importation des acteurs et relations...")
         import_acteurs = """
         LOAD CSV WITH HEADERS FROM 'file:///acteurs.csv' AS row
         MERGE (a:Acteur {name: row.acteur})
@@ -47,7 +47,7 @@ class Neo4jImporter:
         """
         self.run_query(import_acteurs)
 
-        print("✅ Importation terminée.")
+        print(" Importation terminée.")
 
 
 if __name__ == "__main__":

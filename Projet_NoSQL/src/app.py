@@ -9,6 +9,7 @@ from cypher_queries import run_query
 st.set_page_config(layout="wide", page_title="Projet NoSQL", page_icon="🎬")
 st.title("🎬 Exploration et Interrogation de Bases de Donnees NoSQL")
 
+# Style CSS
 st.markdown("""
 <style>
     .st-emotion-cache-1kyxreq {justify-content: center;}
